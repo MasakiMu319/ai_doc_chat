@@ -2,6 +2,7 @@ from pathlib import Path
 import aiohttp
 import logging
 import os
+import re
 import typing as t
 
 from markitdown import MarkItDown
@@ -95,8 +96,11 @@ async def clean_md(filename: str):
     :return:
     """
     with open(filename, "r") as f:
-        lines = f.readlines()
-        lines = lines[:-6]
+        content = f.read()
 
+    new_content = re.sub(r"^.*?(?=\n# )", "", content, flags=re.DOTALL)
+    lines = new_content.split("\n")
+    lines = lines[:-7]
+    content = "\n".join(lines)
     with open(filename, "w") as f:
-        f.writelines(lines)
+        f.write(content)
