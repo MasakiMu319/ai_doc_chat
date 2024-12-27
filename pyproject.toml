@@ -6,6 +6,11 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "coloredlogs>=15.0.1",
+    "langchain-community>=0.3.13",
+    "langchain>=0.3.13",
     "pre-commit>=4.0.1",
+    "pymilvus>=2.5.2",
     "ruff>=0.8.4",
+    "langchain-text-splitters>=0.3.4",
+    "simplemind[full]>=0.2.4",
 ]
