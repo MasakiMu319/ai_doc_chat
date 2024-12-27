@@ -41,7 +41,7 @@ async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):
             logger.debug(f"Save content to {save_path}")
 
 
-async def list_files(dir_path: str | Path) -> t.List[str]:
+def list_files(dir_path: str | Path) -> t.List[str]:
     """
     List all files in a directory.
 

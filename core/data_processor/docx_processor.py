@@ -4,23 +4,20 @@ from typing import Union, List
 
 from langchain_community.document_loaders import Docx2txtLoader
 from langchain_core.documents import Document
-from langchain_text_splitters import MarkdownHeaderTextSplitter
 
 from core.data_processor.base import BaseDataProcessor
 
 
 class DocxProcessor(BaseDataProcessor, ABC):
-    def __init__(self, file_path: Union[str, Path]):
+    def __init__(self, file_path: Union[str, Path], **kwargs):
         """
         Initialize with file path.
         """
-        file_path = file_path if isinstance(file_path, Path) else Path(file_path)
-        if not file_path.is_file:
-            raise ValueError("File path %s is not a valid file." % file_path)
+        super().__init__(file_path=file_path, **kwargs)
 
-        self.documents = Docx2txtLoader(file_path=file_path).load()
-
-        self.text_splitter = MarkdownHeaderTextSplitter()
+        self.documents = []
+        for file_path in self.files:
+            self.documents = Docx2txtLoader(file_path=file_path).load()
 
     async def process(self) -> List[Document]:
         """
