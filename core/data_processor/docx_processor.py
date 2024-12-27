@@ -4,7 +4,7 @@ from typing import Union, List
 
 from langchain_community.document_loaders import Docx2txtLoader
 from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import MarkdownHeaderTextSplitter
 
 from core.data_processor.base import BaseDataProcessor
 
@@ -16,17 +16,11 @@ class DocxProcessor(BaseDataProcessor, ABC):
         """
         file_path = file_path if isinstance(file_path, Path) else Path(file_path)
         if not file_path.is_file:
-            raise ValueError("File path %s is not a valid file." % self.file_path)
+            raise ValueError("File path %s is not a valid file." % file_path)
 
         self.documents = Docx2txtLoader(file_path=file_path).load()
 
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            separators=["。", "！", "？", "\n\n", "\n"],
-            keep_separator="end",
-            chunk_size=512,
-            chunk_overlap=128,
-            is_separator_regex=True,
-        )
+        self.text_splitter = MarkdownHeaderTextSplitter()
 
     async def process(self) -> List[Document]:
         """

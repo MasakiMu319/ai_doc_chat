@@ -13,4 +13,7 @@ dependencies = [
     "ruff>=0.8.4",
     "langchain-text-splitters>=0.3.4",
     "simplemind[full]>=0.2.4",
+    "unstructured[md]>=0.16.11",
+    "nltk>=3.9.1",
+    "markitdown>=0.0.1a3",
 ]
