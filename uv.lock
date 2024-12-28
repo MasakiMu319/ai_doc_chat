@@ -14,11 +14,13 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "coloredlogs" },
+    { name = "dynaconf" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-text-splitters" },
     { name = "markitdown" },
     { name = "nltk" },
+    { name = "openai" },
     { name = "pre-commit" },
     { name = "pymilvus" },
     { name = "ruff" },
@@ -29,11 +31,13 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "coloredlogs", specifier = ">=15.0.1" },
+    { name = "dynaconf", specifier = ">=3.2.6" },
     { name = "langchain", specifier = ">=0.3.13" },
     { name = "langchain-community", specifier = ">=0.3.13" },
     { name = "langchain-text-splitters", specifier = ">=0.3.4" },
     { name = "markitdown", specifier = ">=0.0.1a3" },
     { name = "nltk", specifier = ">=3.9.1" },
+    { name = "openai", specifier = ">=1.58.1" },
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pymilvus", specifier = ">=2.5.2" },
     { name = "ruff", specifier = ">=0.8.4" },
@@ -593,6 +597,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/08/12/9c22a58c0b1e29271051222d8906257616da84135af9ed167c9e28f85cb3/docstring_parser-0.16.tar.gz", hash = "sha256:538beabd0af1e2db0146b6bd3caa526c35a34d61af9fd2887f3a8a27a739aa6e", size = 26565 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/7c/e9fcff7623954d86bdc17782036cbf715ecab1bec4847c008557affe1ca8/docstring_parser-0.16-py3-none-any.whl", hash = "sha256:bf0a1387354d3691d102edef7ec124f219ef639982d096e26e3b60aeffa90637", size = 36533 },
+]
+
+[[package]]
+name = "dynaconf"
+version = "3.2.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/1a/324f1bf234cc4f98445305fd8719245318466e310e05caea7ef052748ecd/dynaconf-3.2.6.tar.gz", hash = "sha256:74cc1897396380bb957730eb341cc0976ee9c38bbcb53d3307c50caed0aedfb8", size = 229209 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/14/c8a7d861262139688fa465d2e27ff7113764d6fa03b15b9c7b666729ea2e/dynaconf-3.2.6-py2.py3-none-any.whl", hash = "sha256:3911c740d717df4576ed55f616c7cbad6e06bc8ef23ffca444b6e2a12fb1c34c", size = 231063 },
 ]
 
 [[package]]
