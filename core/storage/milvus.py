@@ -35,7 +35,11 @@ class MilvusStorage(StorageBase, ABC):
     ):
         dimension = dimension if dimension else 768
         sparse_field = sparse_field if sparse_field else "sparse"
-        schema = schema if schema else MilvusStorage._default_collection_schema()
+        schema = (
+            schema
+            if schema
+            else MilvusStorage._default_collection_schema(dimension=dimension)
+        )
         index_params = (
             index_params if index_params else MilvusStorage._default_collection_index()
         )
@@ -83,7 +87,7 @@ class MilvusStorage(StorageBase, ABC):
         )
 
     @staticmethod
-    def _default_collection_schema() -> CollectionSchema:
+    def _default_collection_schema(dimension: int) -> CollectionSchema:
         """
         Default collection schema for collection. Default vector dimension is 768.
         """
@@ -102,7 +106,7 @@ class MilvusStorage(StorageBase, ABC):
                 FieldSchema(
                     name="vector",
                     dtype=DataType.FLOAT_VECTOR,
-                    dim=768,
+                    dim=dimension,
                 ),
                 FieldSchema(
                     name="content",

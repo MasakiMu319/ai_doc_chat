@@ -18,4 +18,5 @@ dependencies = [
     "markitdown>=0.0.1a3",
     "openai>=1.58.1",
     "dynaconf>=3.2.6",
+    "gradio>=5.9.1",
 ]
