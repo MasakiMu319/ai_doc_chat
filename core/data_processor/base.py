@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import typing as t
+from functools import cached_property
 from pathlib import Path
 from os import PathLike
 
@@ -29,21 +30,25 @@ class BaseDataProcessor(ABC):
             list_files(dir_path=file_path) if file_path.is_dir() else [file_path]
         )
 
-        self.text_splitter = self.text_splitter = RecursiveCharacterTextSplitter(
+        self._kwargs = kwargs
+
+    @cached_property
+    def text_splitter(self) -> RecursiveCharacterTextSplitter:
+        return RecursiveCharacterTextSplitter(
             separators=TEXT_SPLITTERS,
             keep_separator="end",
-            chunk_size=(
-                DEFAULT_CHUNK_SIZE
-                if "chunk_size" not in kwargs
-                else kwargs["chunk_size"]
-            ),
-            chunk_overlap=(
-                DEFAULT_CHUNK_OVERLAP
-                if "chunk_overlap" not in kwargs
-                else kwargs["chunk_overlap"]
-            ),
+            chunk_size=self._kwargs.get("chunk_size", DEFAULT_CHUNK_SIZE),
+            chunk_overlap=self._kwargs.get("chunk_overlap", DEFAULT_CHUNK_OVERLAP),
             is_separator_regex=True,
         )
+
+    def set_text_splitter(self, chunk_size: int = None, chunk_overlap: int = None):
+        if chunk_size is not None:
+            self._kwargs["chunk_size"] = chunk_size
+        if chunk_overlap is not None:
+            self._kwargs["chunk_overlap"] = chunk_overlap
+        if hasattr(self, "text_splitter"):
+            delattr(self, "text_splitter")
 
     @abstractmethod
     def process(self, **kwargs):
