@@ -84,6 +84,7 @@ async def chat(query: str):
     ## 问题
     {query}
     """
+
     prompt = prompt.format(relevant_contents=relevant_contents, query=query)
     print(prompt)
     for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
