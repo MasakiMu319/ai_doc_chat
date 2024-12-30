@@ -29,4 +29,4 @@ async def test_executor():
     result = await executor.results()
     end = time.perf_counter()
     print(f"100 * Time: {end - start}")
-    assert len(result) == 101
+    assert len(result) == 100
