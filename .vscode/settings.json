@@ -1,0 +1,15 @@
+{
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.autoIndent": true,
+    "python.analysis.indexing": true,
+    "python.analysis.autoImportCompletions": true,
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off",
+        "files.autoSave": "onFocusChange",
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
+}
