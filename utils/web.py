@@ -222,7 +222,7 @@ def get_internal_links(
             # Relative path handling
             href = urljoin(url, href)
 
-        if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
+        if urlparse(href).netloc == urlparse(url).netloc:
             internal_links.add(href)
     return internal_links
 

@@ -17,13 +17,21 @@ class WebConnector:
         web_connector_type: WEB_CONNECTOR_TYPE,
         mintlify_cleanup: bool = True,
     ):
+        """
+        Initialize the web connector.
+
+        :param base_url: The base URL to start the web connector.
+        :param web_connector_type: The type of web connector to use.
+        :param mintlify_cleanup: Whether to clean up specific HTML tags.
+        """
         self.mintlify_cleanup = mintlify_cleanup
         self.recursive = False
+
+        logger.info(f"Starting recursive web connector on {base_url}")
 
         match web_connector_type:
             case WEB_CONNECTOR_TYPE.RECURSIVE:
                 self.recursive = True
-                logger.info(f"Starting recursive web connector on {base_url}")
                 self.to_visit_list = [web.ensure_valid_url(base_url)]
                 return
             case WEB_CONNECTOR_TYPE.SINGLE:
@@ -64,6 +72,7 @@ class WebConnector:
             visited_links.add(current_url)
 
             try:
+                # Check if the URL is valid.
                 web.protected_url_check(current_url)
             except Exception as e:
                 last_error = f"Invalid URL {current_url} due to {e}"
@@ -119,7 +128,10 @@ class WebConnector:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     web_connector = WebConnector(
-        base_url="https://example.com",
+        base_url="https://www.lingchen.kim/art-design-pro/docs/guide/essentials/route.html#ishidetab",
         web_connector_type=WEB_CONNECTOR_TYPE.RECURSIVE,
     )
-    print(next(web_connector.load_from_state()))
+    documents = next(web_connector.load_from_state())
+    title = [doc.title for doc in documents]
+    print(title)
+    print(len(documents))
