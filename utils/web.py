@@ -16,7 +16,7 @@ import trafilatura
 from trafilatura.settings import use_config
 
 from oauthlib.oauth2 import BackendApplicationClient
-from playwright.sync_api import Playwright, BrowserContext, sync_playwright
+from playwright.async_api import Playwright, BrowserContext, async_playwright
 from requests_oauthlib import OAuth2Session
 from urllib3.exceptions import MaxRetryError
 
@@ -227,12 +227,12 @@ def get_internal_links(
     return internal_links
 
 
-def start_playwright() -> t.Tuple[Playwright, BrowserContext]:
+async def start_playwright() -> t.Tuple[Playwright, BrowserContext]:
     logger.debug("Starting Playwright")
-    playwright = sync_playwright().start()
-    browser = playwright.chromium.launch(headless=True)
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
 
-    context = browser.new_context()
+    context = await browser.new_context()
 
     if (
         WEB_CONNECTOR_OAUTH_CLIENT_ID
@@ -246,7 +246,7 @@ def start_playwright() -> t.Tuple[Playwright, BrowserContext]:
             client_id=WEB_CONNECTOR_OAUTH_CLIENT_ID,
             client_secret=WEB_CONNECTOR_OAUTH_CLIENT_SECRET,
         )
-        context.set_extra_http_headers(
+        await context.set_extra_http_headers(
             {"Authorization": "Bearer {}".format(token["access_token"])}
         )
 
@@ -257,6 +257,7 @@ def start_playwright() -> t.Tuple[Playwright, BrowserContext]:
 class ParsedHTML:
     title: str | None
     cleaned_text: str
+    url: t.Optional[str] = None
 
 
 def web_html_cleanup(

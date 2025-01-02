@@ -1,4 +1,6 @@
+import asyncio
 from pathlib import Path
+from urllib.parse import urlparse
 import aiohttp
 import logging
 import os
@@ -7,7 +9,35 @@ import typing as t
 
 from markitdown import MarkItDown
 
+from core.connector.constants import WEB_CONNECTOR_TYPE
+from core.connector.web import WebConnector
+
 logger = logging.getLogger(__name__)
+
+
+async def index_documens(url: str):
+    """
+    Index all pages found on the website and coverts them to markdown.
+
+    :param url: the url to start the web connector.
+    :return:
+    """
+    logger.info(f"Starting recursive web connector on {url}")
+    web_connector = WebConnector(
+        base_url=url,
+        web_connector_type=WEB_CONNECTOR_TYPE.RECURSIVE,
+    )
+    documents = await web_connector.load_from_state()
+    herf = urlparse(url)
+
+    await asyncio.gather(
+        *(
+            mark_it_down(uri=doc.url, save_path=f"data/{herf.netloc}/{doc.title}")
+            for doc in documents
+        )
+    )
+
+    logger.info("All documents have been indexed.")
 
 
 async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):

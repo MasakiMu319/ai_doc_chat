@@ -1,3 +1,5 @@
+import asyncio
+from pprint import pprint
 import typing as t
 import logging
 
@@ -46,7 +48,7 @@ class WebConnector:
             case _:
                 raise ValueError(f"Unknown web connector type: {web_connector_type}")
 
-    def load_from_state(self):
+    async def load_from_state(self):
         """
         Index all pages found on the website and coverts them to markdown.
         """
@@ -63,7 +65,7 @@ class WebConnector:
         # Needed to report error
         last_error = None
 
-        playwright, context = web.start_playwright()
+        playwright, context = await web.start_playwright()
         restart_playwright = False
         while to_visit:
             current_url = to_visit.pop()
@@ -84,11 +86,11 @@ class WebConnector:
             try:
                 web.check_internet_connection(current_url)
                 if restart_playwright:
-                    playwright, context = web.start_playwright()
+                    playwright, context = await web.start_playwright()
                     restart_playwright = False
 
-                page = context.new_page()
-                page_response = page.goto(current_url)
+                page = await context.new_page()
+                page_response = await page.goto(current_url)
 
                 final_page = page.url
                 if final_page != current_url:
@@ -100,7 +102,7 @@ class WebConnector:
                         continue
                     visited_links.add(current_url)
 
-                content = page.content()
+                content = await page.content()
                 soup = BeautifulSoup(content, "html.parser")
 
                 if self.recursive:
@@ -115,23 +117,25 @@ class WebConnector:
                     continue
 
                 parsed_html = web.web_html_cleanup(soup, self.mintlify_cleanup)
+                parsed_html.url = current_url
                 documents.append(parsed_html)
             except Exception as e:
                 last_error = f"Error indexing {current_url} due to {e}"
                 logger.error(last_error)
                 continue
 
-        playwright.stop()
-        yield documents
+        await playwright.stop()
+        return documents
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     web_connector = WebConnector(
-        base_url="https://www.lingchen.kim/art-design-pro/docs/guide/essentials/route.html#ishidetab",
+        base_url="https://www.lingchen.kim/art-design-pro/docs/guide/essentials/route.html",
         web_connector_type=WEB_CONNECTOR_TYPE.RECURSIVE,
     )
-    documents = next(web_connector.load_from_state())
-    title = [doc.title for doc in documents]
-    print(title)
-    print(len(documents))
+    documents = asyncio.run(web_connector.load_from_state())
+    urls = [doc.url for doc in documents]
+    pprint(urls)
+    pprint(documents[0])
+    # print(len(documents))
