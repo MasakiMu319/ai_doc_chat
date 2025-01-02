@@ -63,7 +63,7 @@ async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):
                 logger.warning(
                     f"Parent path {parent_path} doesn't exist, try to create one."
                 )
-                os.mkdir(parent_path)
+                os.makedirs(parent_path, exist_ok=True)
 
             with open(save_path, "w") as f:
                 f.write(content)
@@ -108,7 +108,7 @@ async def mark_it_down(uri: str, save_path: str):
     parent_path = save_path.parent
     if not parent_path.exists():
         logger.warning(f"Parent path {parent_path} doesn't exist, try to create one.")
-        os.mkdir(parent_path)
+        os.makedirs(parent_path, exist_ok=True)
 
     with open(save_path, "w") as f:
         f.write(content)
