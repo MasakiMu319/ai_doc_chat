@@ -1,9 +1,5 @@
 import logging
 import coloredlogs
-import logfire
-
-logfire.configure()
-logfire.instrument_aiohttp_client()
 
 logger = logging.getLogger(__name__)
 

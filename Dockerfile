@@ -17,12 +17,7 @@ COPY --from=builder /app /app
 
 COPY data/ data/
 COPY conf/ conf/
-
-ARG LOGFIRE_TOKEN
-ARG MILVUS_URI
-
-ENV LOGFIRE_TOKEN=${LOGFIRE_TOKEN}
-ENV MILVUS_URI=${MILVUS_URI}
+COPY .env .env
 
 # 清理缓存
 RUN rm -rf /var/lib/apt/lists/*

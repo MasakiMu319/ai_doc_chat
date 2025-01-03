@@ -1,19 +1,21 @@
 import asyncio
+import logging
+
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import StreamingResponse
-import logfire
 
 from schema.chat import ChatRequest
-
 from src.ai_doc_chat.chat import chat as chat_with_ai
 from src.ai_doc_chat.chat import prepare_data
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await prepare_data()
-    logfire.info("Data loads sucessfully.")
+    logger.info("Data loads sucessfully.")
     yield
     print("Application shutdown")
 
@@ -23,9 +25,6 @@ app = FastAPI(
     description="A simple API to chat any documents with AI.",
     lifespan=lifespan,
 )
-
-logfire.configure()
-logfire.instrument_fastapi(app=app)
 
 
 @app.post("/chat")

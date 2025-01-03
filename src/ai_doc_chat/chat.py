@@ -1,17 +1,21 @@
 import asyncio
-import os
-from venv import logger
+import logging
 
+import simplemind as sm
+
+from conf import settings
 from core.data_processor.markdown_processor import MarkdownProcessor
 from core.storage.milvus import MilvusStorage
 from utils.llm import SimpleLLM as sl
-import simplemind as sm
 
+logger = logging.getLogger(__name__)
+
+MILVUS_URL = settings.db.MILVUS_URI
 SEMAPHORE = 10
 
 
 async def prepare_data():
-    milvus = MilvusStorage(uri=os.getenv("MILVUS_URI", "http://localhost:19530"))
+    milvus = MilvusStorage(uri=MILVUS_URL)
     # TODO: Check if the collection exists.
     if "art_design" in milvus.list_collections():
         return
@@ -48,7 +52,7 @@ async def prepare_data():
 
 
 async def chat(query: str):
-    milvus = MilvusStorage(uri=os.getenv("MILVUS_URI", "http://localhost:19530"))
+    milvus = MilvusStorage(uri=MILVUS_URL)
     embeddings_generator = sl()
     query_embedding = await embeddings_generator.embedding(
         model="text-embedding-3-small", inputs=query
