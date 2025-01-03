@@ -23,7 +23,7 @@ dependencies = [
     "pytest>=8.3.4",
     "twisted>=24.11.0",
     "pytest-asyncio>=0.25.0",
-    "logfire>=2.11.0",
+    "logfire[fastapi]>=2.11.0",
     "opentelemetry-instrumentation-jinja2>=0.50b0",
     "opentelemetry-instrumentation-fastapi>=0.50b0",
     "opentelemetry-instrumentation-sqlite3>=0.50b0",
@@ -41,4 +41,5 @@ dependencies = [
     "oauthlib>=3.2.2",
     "ipaddress>=1.0.23",
     "trafilatura>=2.0.0",
+    "fastapi[standard]>=0.115.6",
 ]

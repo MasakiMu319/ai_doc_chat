@@ -1,4 +1,6 @@
 import asyncio
+import os
+from venv import logger
 
 from core.data_processor.markdown_processor import MarkdownProcessor
 from core.storage.milvus import MilvusStorage
@@ -9,6 +11,10 @@ SEMAPHORE = 10
 
 
 async def prepare_data():
+    milvus = MilvusStorage(uri=os.getenv("MILVUS_URI", "http://localhost:19530"))
+    # TODO: Check if the collection exists.
+    if "art_design" in milvus.list_collections():
+        return
     md_processor = MarkdownProcessor(file_path="data")
     chunks = await md_processor.process()
 
@@ -33,7 +39,6 @@ async def prepare_data():
         )
     )
 
-    milvus = MilvusStorage(uri="http://localhost:19530")
     milvus.create_collection(
         collection_name="art_design",
         dimension=1536,
@@ -43,7 +48,7 @@ async def prepare_data():
 
 
 async def chat(query: str):
-    milvus = MilvusStorage(uri="http://localhost:19530")
+    milvus = MilvusStorage(uri=os.getenv("MILVUS_URI", "http://localhost:19530"))
     embeddings_generator = sl()
     query_embedding = await embeddings_generator.embedding(
         model="text-embedding-3-small", inputs=query
@@ -86,6 +91,9 @@ async def chat(query: str):
     """
 
     prompt = prompt.format(relevant_contents=relevant_contents, query=query)
-    print(prompt)
+    logger.debug(prompt)
+    # for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
+    #     yield chunk
+
     for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
         yield chunk

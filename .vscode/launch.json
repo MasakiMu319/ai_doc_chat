@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "main:app",
+                "--reload",
+                "--port",
+                "9527"
+            ],
+            "jinja": true,
+            "justMyCode": false,
+        },
+        {
             "name": "Web Connector Debugger",
             "type": "debugpy",
             "request": "launch",

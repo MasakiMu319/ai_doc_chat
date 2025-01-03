@@ -1,5 +1,5 @@
 import gradio as gr
-from src.ai_doc_chat.main import chat
+from src.ai_doc_chat.chat import chat
 
 
 with gr.Blocks() as demo:
