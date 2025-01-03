@@ -9,3 +9,4 @@ data/
 
 *.toml
 .env
+ai-doc-chat-docker-compose.yml
