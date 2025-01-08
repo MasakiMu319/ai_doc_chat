@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import secrets
 from typing import Optional
@@ -52,14 +51,8 @@ async def chat(request: ChatRequest, api_key: str = Security(verify_api_key)):
     """
     Chat with AI to get the answer from the documents.
     """
-
-    async def stream():
-        async for chunk in chat_with_ai(request.query):
-            yield chunk
-            await asyncio.sleep(0)
-
     return StreamingResponse(
-        stream(),
+        chat_with_ai(request.query),
         media_type="text/event-stream",
     )
 

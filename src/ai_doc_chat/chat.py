@@ -101,3 +101,4 @@ async def chat(query: str):
 
     for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
         yield chunk
+        await asyncio.sleep(0)

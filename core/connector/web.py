@@ -35,10 +35,8 @@ class WebConnector:
             case WEB_CONNECTOR_TYPE.RECURSIVE:
                 self.recursive = True
                 self.to_visit_list = [web.ensure_valid_url(base_url)]
-                return
             case WEB_CONNECTOR_TYPE.SINGLE:
                 self.to_visit_list = [web.ensure_valid_url(base_url)]
-                return
             case WEB_CONNECTOR_TYPE.SITEMAP:
                 self.to_visit_list = web.extract_urls_from_sitemap(
                     web.ensure_valid_url(base_url)
