@@ -87,11 +87,11 @@ async def chat(query: str):
     ]
     # print(relevant_contents)
     prompt = """
-    你是一位问答助手，你的任务是根据“参考内容”中的文本信息回答问题，请准确回答问题，不要健谈，如果提供的文本信息无法回答问题。请直接回复“提供的内容无法回答问题”，我相信你能做的很好。\n
-    ## 参考内容
-    {relevant_contents}
-    ## 问题
-    {query}
+你是一位问答助手，你的任务是根据“参考内容”中的文本信息回答问题，请准确回答问题，不要健谈，如果提供的文本信息无法回答问题。请直接回复“提供的内容无法回答问题”，我相信你能做的很好。\n
+## 参考内容
+{relevant_contents}
+## 问题
+{query}
     """
 
     prompt = prompt.format(relevant_contents=relevant_contents, query=query)
