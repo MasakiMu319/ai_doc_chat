@@ -55,7 +55,8 @@ async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):
             uri = "https://r.jina.ai/" + uri
         save_path = Path(save_path)
         logger.debug(f"Fetch uri: {uri}")
-        async with session.get(uri) as response:
+        default_headers = {"X-Engine": "readerlm-v2"}
+        async with session.get(uri, headers=default_headers) as response:
             content = await response.text()
 
             parent_path = save_path.parent
