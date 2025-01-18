@@ -1,10 +1,8 @@
+import logging
 from pathlib import Path
 import os
-import logging
-from dynaconf import Dynaconf
-from utils.log import patch_logger
 
-patch_logger(__name__, logging.DEBUG)
+from dynaconf import Dynaconf
 
 logger = logging.getLogger(__name__)
 
