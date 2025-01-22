@@ -1,25 +1,21 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+# Install uv
+FROM python:3.12-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Change the working directory to the `app` directory
 WORKDIR /app
 
-COPY pyproject.toml ./
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-editable
 
-RUN uv sync
+# Copy the project into the intermediate image
+ADD . /app
 
-COPY . .
-
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
-
-WORKDIR /app
-
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /app /app
-
-COPY data/ data/
-COPY conf/ conf/
-COPY .env .env
-
-# 清理缓存
-RUN rm -rf /var/lib/apt/lists/*
+# Sync the project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-install-project
 
 ENTRYPOINT ["uv", "run", "main.py"]

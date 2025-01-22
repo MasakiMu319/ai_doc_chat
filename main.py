@@ -8,8 +8,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 
 from schema.chat import ChatRequest
-from src.ai_doc_chat.chat import chat as chat_with_ai
-from src.ai_doc_chat.chat import prepare_data
+from service.chat import prepare_data, chat
 from utils.yalog import Log
 
 
@@ -29,6 +28,7 @@ app = FastAPI(
     title="AI Doc Chat",
     description="Chat with AI to get the answer from the documents.",
     lifespan=lifespan,
+    docs_url=None,
 )
 
 
@@ -45,13 +45,13 @@ async def verify_api_key(
     return api_key
 
 
-@app.post("/chat")
-async def chat(request: ChatRequest, api_key: str = Security(verify_api_key)):
+@app.post("/query")
+async def query(request: ChatRequest, api_key: str = Security(verify_api_key)):
     """
     Chat with AI to get the answer from the documents.
     """
     return StreamingResponse(
-        chat_with_ai(request.query),
+        chat(request.query),
         media_type="text/event-stream",
     )
 
