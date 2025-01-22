@@ -43,4 +43,6 @@ dependencies = [
     "trafilatura>=2.0.0",
     "fastapi[standard]>=0.115.6",
     "loguru>=0.7.3",
+    "lancedb>=0.18.0",
+    "redis>=5.2.1",
 ]
