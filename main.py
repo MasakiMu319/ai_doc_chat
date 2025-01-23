@@ -15,7 +15,7 @@ from utils.yalog import Log
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Log.start()
-    await prepare_data()
+    await prepare_data(target="anyio")
     app.state.api_key = f"adc-{secrets.token_urlsafe(32)}"
     logging.info(f"API key: {app.state.api_key}")
     logging.info("Data loads sucessfully.")

@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import aiohttp
 import logging
+import logfire
 import os
 import re
 import typing as t
@@ -10,43 +11,76 @@ import typing as t
 from markitdown import MarkItDown
 
 from core.connector.constants import WEB_CONNECTOR_TYPE
-from core.connector.web import WebConnector
+from core.connector.onyx import WebConnector
+from utils.limitor import Limitor, retry_with_limitor_async
 
 logger = logging.getLogger(__name__)
 
 
-async def index_documens(url: str):
+async def index_documens(url: str, use_jina: bool = False):
     """
     Index all pages found on the website and coverts them to markdown.
 
     :param url: the url to start the web connector.
     :return:
     """
-    logger.info(f"Starting recursive web connector on {url}")
-    web_connector = WebConnector(
-        base_url=url,
-        web_connector_type=WEB_CONNECTOR_TYPE.RECURSIVE,
-    )
-    documents = await web_connector.load_from_state()
-    herf = urlparse(url)
-
-    await asyncio.gather(
-        *(
-            mark_it_down(uri=doc.url, save_path=f"data/{herf.netloc}/{doc.title}")
-            for doc in documents
+    with logfire.span("index_documens"):
+        logfire.info(f"Starting recursive web connector on {url}")
+        web_connector = WebConnector(
+            base_url=url,
+            web_connector_type=WEB_CONNECTOR_TYPE.RECURSIVE,
         )
-    )
+        documents = await web_connector.load_from_state()
+        herf = urlparse(url)
 
-    logger.info("All documents have been indexed.")
+        parent_path = Path(f"data/{herf.netloc}")
+        if not use_jina:
+            await asyncio.gather(
+                *(
+                    mark_it_down(
+                        uri=doc.url,
+                        save_path=parent_path.joinpath(doc.title),
+                    )
+                    for doc in documents
+                )
+            )
+        else:
+            jina_limitor = Limitor(key="jina", period=60, max_count=10, timeout=120)
+            used_list = []
+            lock = asyncio.Lock()
+            async with asyncio.TaskGroup() as tg:
+                for doc in documents:
+                    async with lock:
+                        if doc.url.split("/")[-1] in used_list or doc.url.endswith(
+                            ".txt"
+                        ):
+                            continue
+                        used_list.append(doc.url.split("/")[-1])
+
+                    with logfire.span(f"fetching: {doc.url}"):
+                        tg.create_task(
+                            fetch_uri(
+                                uri=doc.url,
+                                save_path=parent_path.joinpath(doc.title),
+                                with_jina=True,
+                                limitor=jina_limitor,
+                            )
+                        )
+
+        logfire.info("All documents have been indexed.")
 
 
-async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):
+@retry_with_limitor_async(max_retries=3, delay=1)
+async def fetch_uri(
+    uri: str, save_path: str, with_jina: bool = False, limitor: Limitor = None
+):
     """
     Fetch content from uri and save it.
 
     :param uri: the uri of the content.
     :param save_path: the path to save the content.
     :param with_jina: whether to use the jina proxy to parse the content.
+    :param limitor: the limitor to limit the number of requests.
     :return:
     """
     async with aiohttp.ClientSession() as session:
@@ -56,8 +90,14 @@ async def fetch_uri(uri: str, save_path: str, with_jina: bool = False):
         save_path = Path(save_path)
         logger.debug(f"Fetch uri: {uri}")
         default_headers = {"X-Engine": "readerlm-v2"}
+
         async with session.get(uri, headers=default_headers) as response:
+            if response.status != 200:
+                raise Exception(f"Failed to fetch {uri}")
+
             content = await response.text()
+            contents = content.split("\n")
+            content = "\n".join(contents[1:-1])
 
             parent_path = save_path.parent
             if not parent_path.exists():

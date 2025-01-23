@@ -15,14 +15,14 @@ MILVUS_URL = settings.db.MILVUS_URI
 SEMAPHORE = 10
 
 
-async def prepare_data():
+async def prepare_data(target: str = "art_design"):
     with logfire.span("prepare_data"):
         milvus = MilvusStorage(uri=MILVUS_URL)
         # TODO: Check if the collection exists.
-        if "art_design" in milvus.list_collections():
+        if target in milvus.list_collections():
             return
         with logfire.span("prepare_data.md_processor"):
-            md_processor = MarkdownProcessor(file_path="data")
+            md_processor = MarkdownProcessor(file_path=f"data/{target}")
             chunks = await md_processor.process()
 
         with logfire.span("embedding data"):
@@ -48,53 +48,39 @@ async def prepare_data():
             )
 
         milvus.create_collection(
-            collection_name="art_design",
+            collection_name=target,
             dimension=1536,
             enable_bm25=True,
         )
-        milvus.store(collection_name="art_design", data=points)
+        milvus.store(collection_name=target, data=points)
 
 
 async def chat(query: str):
     milvus = MilvusStorage(uri=MILVUS_URL)
-    embeddings_generator = sl()
-    query_embedding = await embeddings_generator.embedding(
-        model="text-embedding-3-small", inputs=query
-    )
-    query_req = {
-        "dense": {
-            "data": [query_embedding],
-            "anns_field": "vector",
-            "param": {
-                "metric_type": "COSINE",
-                "params": {"ef": 250},
-            },
-            "limit": 5,
-        },
-        "sparse": {
-            "data": [query],
-            "anns_field": "sparse",
-            "param": {
-                "metric_type": "BM25",
-                "params": {"drop_ratio_build": 0.0},
-            },
-            "limit": 5,
-        },
-    }
     with logfire.span("chat.milvus_search"):
-        relevant_contents = milvus.hybrid_search(
-            collection_name="art_design",
-            query=query_req,
-        )
-        with logfire.span("retrival_contents"):
-            for index, item in enumerate(relevant_contents):
-                logfire.info(f"{index}: {item}")
+        try:
+            query_embedding = await sl().embedding(
+                model="text-embedding-3-small", inputs=query
+            )
+            logfire.info(f"query_embedding: {query_embedding}")
+            query_req = MilvusStorage.build_hybrid_search_query(
+                query_embedding=query_embedding, query=query
+            )
+            relevant_contents = milvus.hybrid_search(
+                collection_name="anyio",
+                query=query_req,
+            )
+        except Exception as e:
+            logfire.exception(f"milvus_search error: {e}")
+            return
+
+        for index, item in enumerate(relevant_contents):
+            logfire.info(f"{index}: {item}")
 
         relevant_contents = [
             str(index + 1) + "." + item.get("entity").get("content")
             for index, item in enumerate(relevant_contents)
         ]
-    # print(relevant_contents)
     prompt = """
 你是一位问答助手，你的任务是根据“参考内容”中的文本信息回答问题，请准确回答问题，不要健谈，如果提供的文本信息无法回答问题。请直接回复“提供的内容无法回答问题”，我相信你能做的很好。\n
 ## 参考内容
@@ -104,10 +90,7 @@ async def chat(query: str):
     """
 
     prompt = prompt.format(relevant_contents=relevant_contents, query=query)
-    logger.debug(prompt)
-    # for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
-    #     yield chunk
-
+    logfire.info(f"prompt: {prompt}")
     with logfire.span("chat.llm_generate"):
         for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
             logfire.info(f"sending chunk: {chunk}")

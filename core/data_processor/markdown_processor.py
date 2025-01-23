@@ -32,6 +32,7 @@ class MarkdownProcessor(BaseDataProcessor, ABC):
         Process markdown file, and return chunks.
         """
         md_header_splits = []
+
         for document in self.documents:
             md_header_splits += self.md_splitter.split_text(text=document.page_content)
 

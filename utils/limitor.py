@@ -1,5 +1,8 @@
+import asyncio
 import time
+import functools
 
+import logfire
 import redis.asyncio as aioredis
 
 from conf import settings
@@ -35,7 +38,7 @@ class Limitor:
             )
             async with self.redis_client.pipeline() as pipe:
                 pipe.zremrangebyscore(key, 0, window_start)
-                pipe.zcount(key)
+                pipe.zcard(key)
                 pipe.zadd(key, {f"{now:.9f}": now})
                 pipe.expire(key, self.period)
 
@@ -46,3 +49,31 @@ class Limitor:
                     await pipe.execute()
                     continue
                 return True
+
+
+def retry_with_limitor_async(max_retries: int = 3, delay: float = 1.0):
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            limitor = kwargs.get("limitor")
+
+            for attempt in range(max_retries):
+                try:
+                    if limitor and not await limitor.is_action_allowed_with_block():
+                        raise Exception("Rate limit exceeded")
+
+                    response = await func(*args, **kwargs)
+                    return response
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    logfire.warning(
+                        f"Attempt {attempt + 1} failed: {str(e)}, retrying..."
+                    )
+                    await asyncio.sleep(delay * (attempt + 1))
+
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

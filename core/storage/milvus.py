@@ -218,3 +218,31 @@ class MilvusStorage(StorageBase, ABC):
             limit=limit,
         )
         return res[0]
+
+    @classmethod
+    def build_hybrid_search_query(
+        cls, query_embedding: t.List[float], query: str
+    ) -> t.Dict:
+        """
+        Build hybrid search query.
+        """
+        return {
+            "dense": {
+                "data": [query_embedding],
+                "anns_field": "vector",
+                "param": {
+                    "metric_type": "COSINE",
+                    "params": {"ef": 250},
+                },
+                "limit": 5,
+            },
+            "sparse": {
+                "data": [query],
+                "anns_field": "sparse",
+                "param": {
+                    "metric_type": "BM25",
+                    "params": {"drop_ratio_build": 0.0},
+                },
+                "limit": 5,
+            },
+        }
