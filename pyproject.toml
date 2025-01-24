@@ -45,4 +45,5 @@ dependencies = [
     "loguru>=0.7.3",
     "lancedb>=0.18.0",
     "redis>=5.2.1",
+    "json-repair>=0.35.0",
 ]

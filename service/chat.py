@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import logfire
+from typing import List
 
 import simplemind as sm
 
@@ -8,6 +9,8 @@ from conf import settings
 from core.data_processor.markdown_processor import MarkdownProcessor
 from core.storage.milvus import MilvusStorage
 from utils.llm import SimpleLLM as sl
+from utils.llm import try_parse_json_object
+from utils.prompt import query_prompt, rewrite_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -55,24 +58,31 @@ async def prepare_data(target: str = "art_design"):
         milvus.store(collection_name=target, data=points)
 
 
-async def chat(query: str):
+async def search_relevant_contents(queries: List[str]):
     milvus = MilvusStorage(uri=MILVUS_URL)
     with logfire.span("chat.milvus_search"):
-        try:
-            query_embedding = await sl().embedding(
-                model="text-embedding-3-small", inputs=query
-            )
-            logfire.info(f"query_embedding: {query_embedding}")
-            query_req = MilvusStorage.build_hybrid_search_query(
-                query_embedding=query_embedding, query=query
-            )
-            relevant_contents = milvus.hybrid_search(
-                collection_name="anyio",
-                query=query_req,
-            )
-        except Exception as e:
-            logfire.exception(f"milvus_search error: {e}")
-            return
+        relevant_contents = []
+        for query in queries:
+            try:
+                query_embedding = await sl().embedding(
+                    model="text-embedding-3-small", inputs=query
+                )
+                logfire.info(f"query_embedding: {query_embedding}")
+                query_req = MilvusStorage.build_hybrid_search_query(
+                    query_embedding=query_embedding, query=query
+                )
+                relevant_contents.extend(
+                    milvus.hybrid_search(
+                        collection_name="anyio",
+                        query=query_req,
+                    )
+                )
+            except Exception as e:
+                logfire.exception(f"milvus_search error: {e}")
+
+        relevant_contents = sorted(
+            relevant_contents, key=lambda x: x.get("distance"), reverse=True
+        )
 
         for index, item in enumerate(relevant_contents):
             logfire.info(f"{index}: {item}")
@@ -81,18 +91,39 @@ async def chat(query: str):
             str(index + 1) + "." + item.get("entity").get("content")
             for index, item in enumerate(relevant_contents)
         ]
-    prompt = """
-你是一位问答助手，你的任务是根据“参考内容”中的文本信息回答问题，请准确回答问题，不要健谈，如果提供的文本信息无法回答问题。请直接回复“提供的内容无法回答问题”，我相信你能做的很好。\n
-## 参考内容
-{relevant_contents}
-## 问题
-{query}
-    """
+        relevant_contents = list(set(relevant_contents))
+        return relevant_contents
 
-    prompt = prompt.format(relevant_contents=relevant_contents, query=query)
+
+async def rewrite(query: str):
+    rewrite_query = rewrite_prompt.format(query=query)
+    logfire.info(f"rewrite_query: {rewrite_query}")
+    with logfire.span("chat.llm_rewrite"):
+        try:
+            response = sm.generate_text(
+                prompt=rewrite_query,
+                llm_model="gpt-4o-mini",
+            )
+            logfire.info(f"raw response: {response}")
+            response, queries = try_parse_json_object(response)
+            queries = queries.get("query")
+            logfire.info(f"queries: {queries}")
+        except Exception as e:
+            logfire.exception(f"llm_rewrite error: {e}")
+            return []
+        return queries
+
+
+async def chat(query: str):
+    queries = await rewrite(query=query)
+    queries.append(query)
+    relevant_contents = await search_relevant_contents(queries=queries)
+    prompt = query_prompt.format(relevant_contents=relevant_contents, query=query)
     logfire.info(f"prompt: {prompt}")
     with logfire.span("chat.llm_generate"):
-        for chunk in sm.generate_text(prompt=prompt, llm_model="gpt-4o", stream=True):
+        for chunk in sm.generate_text(
+            prompt=prompt, llm_model="gpt-4o-mini", stream=True
+        ):
             logfire.info(f"sending chunk: {chunk}")
             yield chunk
             await asyncio.sleep(0)
