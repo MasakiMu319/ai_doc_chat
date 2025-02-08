@@ -198,8 +198,8 @@ class MilvusStorage(StorageBase, ABC):
                 "param": {
                     "metric_type": "BM25",
                     "params": {"drop_ratio_build": 0.0},
-                 },
-                 "limit": 5,
+                },
+                "limit": 5,
             }
         }
         """

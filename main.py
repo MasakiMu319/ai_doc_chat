@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 
 from schema.chat import ChatRequest
-from service.chat import prepare_data, chat
+from service.milvus.chat import prepare_data, chat
 from utils.yalog import Log
 
 

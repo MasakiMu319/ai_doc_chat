@@ -8,6 +8,7 @@ import simplemind as sm
 from conf import settings
 from core.data_processor.markdown_processor import MarkdownProcessor
 from core.storage.milvus import MilvusStorage
+from utils.constants import SEMAPHORE
 from utils.llm import SimpleLLM as sl
 from utils.llm import try_parse_json_object
 from utils.prompt import query_prompt, rewrite_prompt
@@ -15,7 +16,6 @@ from utils.prompt import query_prompt, rewrite_prompt
 logger = logging.getLogger(__name__)
 
 MILVUS_URL = settings.db.MILVUS_URI
-SEMAPHORE = 10
 
 
 async def prepare_data(target: str = "art_design"):
