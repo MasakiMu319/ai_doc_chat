@@ -1,6 +1,5 @@
-# Install uv
-FROM python:3.12-slim AS builder
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
 
 # Change the working directory to the `app` directory
 WORKDIR /app
@@ -16,6 +15,15 @@ ADD . /app
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-install-project
+    uv sync --frozen --no-editable
 
-ENTRYPOINT ["uv", "run", "app.py"]
+
+FROM python:3.12-slim-bookworm
+
+# Copy the application from the builder
+COPY --from=builder --chown=app:app /app /app
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+ENTRYPOINT ["python3", "/app/app.py"]
